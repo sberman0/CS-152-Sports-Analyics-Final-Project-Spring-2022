@@ -1,9 +1,12 @@
+from asyncio import run
 import streamlit as st
 import csv
 import pandas as pd
 from PIL import Image
 #import re, math
 import random
+from itertools import permutations
+import time
 
 def read_team_data(filename):
     team_data = pd.read_csv(filename)
@@ -93,15 +96,13 @@ def calculate_thresholds(df, players):
         else:
             thresholds['hr_thresh'].append(curr_threshold)
 
-    st.write(thresholds)
+    # st.write(thresholds)
     return thresholds
 
 
 def run_monte_carlo(thresholds):
+    #start = time.perf_counter()
     game_state = dict({'1B': 0, '2B': 0, '3B':0, 'Outs': 0, 'Runs':0, 'Next_Batter':0, 'Inning':1})
-
-    st.write(type(game_state))
-    st.write(type(thresholds))
 
     for i in range(1,10):
         # For each inning, reset the out count and bases
@@ -207,8 +208,51 @@ def run_monte_carlo(thresholds):
 
             game_state['Next_Batter'] = (game_state['Next_Batter'] + 1) % (len(thresholds['1b_thresh']))
 
+    #end = time.perf_counter()
+    #st.write(end - start)
     return game_state['Runs']
 
+def avg_runs(thresholds):
+    start_time = time.perf_counter()
+    runs = []
+    for i in range(1000):
+        runs.append(run_monte_carlo(thresholds))
+
+    end_time = time.perf_counter()
+    st.write(end_time - start_time)
+    return (sum(runs) / len(runs))
+
+def optimize_lineup(df, players):
+    # st.write("Permutations: ")
+    # st.write(list(permutations(players)))
+
+    perms = list(permutations(players))
+    curr_max = 0
+    curr_best_lineup = []
+    start_time = time.perf_counter()
+
+    for perm in perms:
+        thresholds = calculate_thresholds(df, perm)
+        avg = run_monte_carlo(thresholds)
+
+        # for i in range(1000):
+        #     runs.append(run_monte_carlo(thresholds))
+        # avg = (sum(runs) / len(runs))
+
+        # st.write(avg)
+        # st.write(perm)
+        # st.write('-------')
+        if avg > curr_max:
+            curr_max = avg
+            curr_best_lineup = perm
+
+    st.write("Best: ")
+    st.write(curr_max)
+    st.write(curr_best_lineup)
+    end_time = time.perf_counter()
+    st.write(end_time - start_time)
+
+    
 
 st.write("""
          ## Monte Carlo Simulations for Batting Order Optimization (Change Me Later)
@@ -218,59 +262,72 @@ team_list = ['No Selection', 'Amherst', 'Bates',
              'Bowdoin', 'Colby', 'Hamilton', 'Middlebury', 
              'Trinity', 'Tufts', 'Wesleyan', 'Williams']
 
-col1, col2 = st.columns(2)
-with col1:
-    your_team = st.selectbox('Select Your Team:', team_list)
-    
-    if your_team != 'No Selection':
-        st.write('You selected:', your_team)
-        logo_filename = your_team + '-logo.png'
-        logo = Image.open('images/' + logo_filename)
-        cap = your_team + ' Logo'
+# col1, col2 = st.columns(2)
+# with col1:
+your_team = st.selectbox('Select Your Team:', team_list)
+
+if your_team != 'No Selection':
+    st.write('You selected:', your_team)
+    logo_filename = your_team + '-logo.png'
+    logo = Image.open('images/' + logo_filename)
+    cap = your_team + ' Logo'
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write('')
+    with col2:
         st.image(logo)
+    with col3:
+        st.write('')
 
-with col2:
-    opponent = st.selectbox('Select Your Opponent:', team_list)
+# with col2:
+#     opponent = st.selectbox('Select Your Opponent:', team_list)
 
-    if opponent != 'No Selection':
-        st.write('You selected:', opponent)
-        logo_filename2 = opponent + '-logo.png'
-        logo2 = Image.open('images/' + logo_filename2)
-        cap2 = opponent + ' Logo'
-        st.image(logo2)
+#     if opponent != 'No Selection':
+#         st.write('You selected:', opponent)
+#         logo_filename2 = opponent + '-logo.png'
+#         logo2 = Image.open('images/' + logo_filename2)
+#         cap2 = opponent + ' Logo'
+#         st.image(logo2)
         
 
 if your_team != 'No Selection':
 
     # get the your_team name and read in the data from the csv for that your_team
-    filename = your_team + '_roster.csv'
+    filename = 'rosters/' + your_team + '_roster.csv'
 
-    your_team_data = pd.read_csv('rosters/' + filename)
+    
+    your_team_data = pd.read_csv(filename)
     your_team_players = your_team_data.Player
+
+    run_type = st.radio("Select an option:", ['# Of Runs', 'Lineup Optimization'])
 
     message1 = 'Select the players for the ' + your_team + ' lineup:'
     your_team_selected = st.multiselect(message1, your_team_players)
 
-    st.write(your_team_selected)
+    #st.write(your_team_selected)
 
     if st.button('Submit'):
-        df = read_team_data('rosters/' + filename)
-        thresholds = calculate_thresholds(df, your_team_selected)
-        st.write(run_monte_carlo(thresholds))
+        df = read_team_data(filename)
+    
+        if run_type == '# Of Runs':
+            thresholds = calculate_thresholds(df, your_team_selected)
+            st.title("Number of predicted runs: " + str(avg_runs(thresholds)))
+        else:
+            st.title('Fuck Alex')
+            optimize_lineup(df, your_team_selected)
 
 
+# if opponent != 'No Selection':
 
+#     # get the your_team name and read in the data from the csv for that your_team
+#     filename2 = opponent + '_roster.csv'
 
-if opponent != 'No Selection':
+#     opponent_data = pd.read_csv('rosters/' + filename2)
+#     opponent_players = opponent_data.Player
 
-    # get the your_team name and read in the data from the csv for that your_team
-    filename2 = opponent + '_roster.csv'
+#     message2 = 'OPTIONAL: Sel' + opponent + ' lineup:'
+#     opponent_selected = st.multiselect(message2, opponent_players)
 
-    opponent_data = pd.read_csv('rosters/' + filename2)
-    opponent_players = opponent_data.Player
-
-    message2 = 'OPTIONAL: Sel' + opponent + ' lineup:'
-    opponent_selected = st.multiselect(message2, opponent_players)
-
-    st.write(opponent_selected)
+#     st.write(opponent_selected)
 
