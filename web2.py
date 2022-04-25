@@ -268,6 +268,25 @@ your_team = st.selectbox('Select Your Team:', team_list)
 
 if your_team != 'No Selection':
     st.write('You selected:', your_team)
+
+    uploaded_file = st.file_uploader("Optional: Upload a new csv data file", type='csv')
+    if uploaded_file is not None:
+        # To read file as bytes:
+        bytes_data = uploaded_file.getvalue()
+        st.write(bytes_data)
+
+        # # To convert to a string based IO:
+        # stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+        # st.write(stringio)
+
+        # # To read file as string:
+        # string_data = stringio.read()
+        # st.write(string_data)
+
+        # Can be used wherever a "file-like" object is accepted:
+        dataframe = pd.read_csv(uploaded_file)
+        st.write(dataframe)
+
     logo_filename = your_team + '-logo.png'
     logo = Image.open('images/' + logo_filename)
     cap = your_team + ' Logo'
