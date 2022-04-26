@@ -412,6 +412,7 @@ def main():
                     else: # run_type == 'Lineup Optimization':
                         # st.title('Fuck Alex')
                         lineup, runs = do_flip_optimization(df, players_test)
+                        st.title('Optimized Lineup:')
                         st.write(lineup)
                         #st.write(runs)
                     
