@@ -256,7 +256,7 @@ def optimize_lineup(df, players):
     perms = list(permutations(players))
     curr_max = 0
     curr_best_lineup = []
-    start_time = time.perf_counter()
+    #start_time = time.perf_counter()
 
     for perm in perms:
         thresholds = calculate_thresholds(df, perm)
@@ -273,11 +273,11 @@ def optimize_lineup(df, players):
             curr_max = avg
             curr_best_lineup = perm
 
-    st.write("Best: ")
-    st.write(curr_max)
-    st.write(curr_best_lineup)
-    end_time = time.perf_counter()
-    st.write(end_time - start_time)
+    #st.write("Best: ")
+    #st.write(curr_max)
+    #st.write(curr_best_lineup)
+    #end_time = time.perf_counter()
+    #st.write(end_time - start_time)
 
 def flip(players, i, j):
     players[i], players[j] = players[j], players[i]
@@ -303,7 +303,7 @@ def do_flip_optimization(df, players):
             best_runs = runs
             best_lineup = curr_players
 
-    # return best_lineup, best_runs
+    return best_lineup, best_runs
 
     # recurse and do_flip_optimization w the best lineup we found
     # if best_lineup != players:
@@ -342,7 +342,7 @@ def main():
         if uploaded_file is not None:
             # To read file as bytes:
             bytes_data = uploaded_file.getvalue()
-            st.write(bytes_data)
+            #st.write(bytes_data)
 
             dataframe = pd.read_csv(uploaded_file)
             st.write(dataframe)
@@ -413,7 +413,7 @@ def main():
                         # st.title('Fuck Alex')
                         lineup, runs = do_flip_optimization(df, players_test)
                         st.write(lineup)
-                        st.write(runs)
+                        #st.write(runs)
                     
 
 if __name__ == "__main__":
