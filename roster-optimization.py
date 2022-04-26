@@ -15,6 +15,8 @@
 #          runs that batting lineup would score.
 #
 
+from audioop import avg
+from pydoc import tempfilepager
 import streamlit as st
 import csv
 import pandas as pd
@@ -238,13 +240,13 @@ def run_monte_carlo(thresholds):
     return game_state['Runs']
 
 def avg_runs(thresholds):
-    start_time = time.perf_counter()
+    # start_time = time.perf_counter()
     runs = []
     for i in range(1000):
         runs.append(run_monte_carlo(thresholds))
 
-    end_time = time.perf_counter()
-    st.write(end_time - start_time)
+    # end_time = time.perf_counter()
+    # st.write(end_time - start_time)
     return (sum(runs) / len(runs))
 
 def optimize_lineup(df, players):
@@ -277,10 +279,43 @@ def optimize_lineup(df, players):
     end_time = time.perf_counter()
     st.write(end_time - start_time)
 
+def flip(players, i, j):
+    players[i], players[j] = players[j], players[i]
+    return players
+
+def do_flip_optimization(df, players):
+    curr_players = players[:]
+    thresholds = calculate_thresholds(df, curr_players)
+    best_runs = avg_runs(thresholds)
+    best_lineup = curr_players
+    # st.write(curr_players)
+    # st.write(best_runs)
+    # st.write ('----------')
+    
+    for i in range(len(players) - 2): # - 1 so we can flip the end w/o OOB
+        curr_players = flip(players[:], i, i + 1)
+        thresholds = calculate_thresholds(df, curr_players)
+        runs = avg_runs(thresholds)
+        # st.write(curr_players)
+        # st.write(runs)
+        # st.write ('----------')
+        if runs > best_runs:
+            best_runs = runs
+            best_lineup = curr_players
+
+    # return best_lineup, best_runs
+
+    # recurse and do_flip_optimization w the best lineup we found
+    # if best_lineup != players:
+    #     st.write(best_lineup)
+    #     return do_flip_optimization(df, best_lineup)
+    # else:
+    #     return best_lineup
+
 def main():
     st.title("NESCAC Baseball Batting Order Optimization")
 
-    team_list = ['No Selection', 'Amherst', 'Bates', 
+    team_list = ['<select>', 'Amherst', 'Bates', 
                 'Bowdoin', 'Colby', 'Hamilton', 'Middlebury', 
                 'Trinity', 'Tufts', 'Wesleyan', 'Williams']
 
@@ -288,17 +323,8 @@ def main():
     # with col1:
     your_team = st.selectbox('Select Your Team:', team_list)
 
-    if your_team != 'No Selection':
+    if your_team != '<select>':
         st.write('You selected:', your_team)
-
-        uploaded_file = st.file_uploader("Optional: Upload a new csv data file", type='csv')
-        if uploaded_file is not None:
-            # To read file as bytes:
-            bytes_data = uploaded_file.getvalue()
-            st.write(bytes_data)
-
-            dataframe = pd.read_csv(uploaded_file)
-            st.write(dataframe)
 
         logo_filename = your_team + '-logo.png'
         logo = Image.open('images/' + logo_filename)
@@ -312,6 +338,15 @@ def main():
         with col3:
             st.write('')
 
+        uploaded_file = st.file_uploader("Optional: Upload a new csv data file", type='csv')
+        if uploaded_file is not None:
+            # To read file as bytes:
+            bytes_data = uploaded_file.getvalue()
+            st.write(bytes_data)
+
+            dataframe = pd.read_csv(uploaded_file)
+            st.write(dataframe)
+
     # with col2:
     #     opponent = st.selectbox('Select Your Opponent:', team_list)
 
@@ -321,9 +356,9 @@ def main():
     #         logo2 = Image.open('images/' + logo_filename2)
     #         cap2 = opponent + ' Logo'
     #         st.image(logo2)
-            
+    
 
-    if your_team != 'No Selection':
+    if your_team != '<select>':
 
         # get the your_team name and read in the data from the csv for that your_team
         filename = 'rosters/' + your_team + '_roster.csv'
@@ -331,27 +366,56 @@ def main():
         
         your_team_data = pd.read_csv(filename)
         your_team_players = your_team_data.Player
+        your_team_players = list(your_team_players)
+        your_team_players.insert(0, '<select>')
 
-        run_type = st.radio("Select an option:", ['# Of Runs', 'Lineup Optimization'])
+        run_type = st.radio("Select an option:", ['Predicted # Of Runs', 
+                                                  'Lineup Optimization',
+                                                  'Compare Two Lineups'])
 
-        message1 = 'Select the players for the ' + your_team + ' lineup:'
-        your_team_selected = st.multiselect(message1, your_team_players)
 
-        #st.write(your_team_selected)
+        if run_type == 'Compare Two Lineups':
+            st.warning('Comparing lineups is coming soon!')
+        else:
+            message1 = 'Select the players for the ' + your_team + ' lineup:'
+            #your_team_selected = st.multiselect(message1, your_team_players)
 
-        if st.button('Submit'):
-            df = read_team_data(filename)
-        
-            if run_type == '# Of Runs':
-                thresholds = calculate_thresholds(df, your_team_selected)
-                st.title("Number of predicted runs: " + str(avg_runs(thresholds)))
-            else:
-                st.title('Fuck Alex')
-                optimize_lineup(df, your_team_selected)
+            st.write(message1)
+            col1, col2 = st.columns(2)
+            with col1:
+                one = st.selectbox('Lead-Off: ', your_team_players)
+                three = st.selectbox('Third: ', your_team_players)
+                five = st.selectbox('Fifth: ', your_team_players)
+                seven = st.selectbox('Seventh: ', your_team_players)
+                nine = st.selectbox('Clean Up: ', your_team_players)
+            with col2:
+                two = st.selectbox('Second: ', your_team_players)
+                four = st.selectbox('Fourth: ', your_team_players)
+                six = st.selectbox('Sixth: ', your_team_players)
+                eight = st.selectbox('Eighth: ', your_team_players)
 
+            if st.button('Submit'):
+                players_test = [one, two, three, four, five, six, seven, eight, nine]
+                players_test
+                
+                players_set = set(players_test)
+                if len(players_set) != 9:
+                    st.error('No duplicates allowed')
+                elif '<select>' in players_set:
+                    st.error('Select a player for each position in the lineup')
+                else:
+                    df = read_team_data(filename)
+                
+                    if run_type == 'Predicted # Of Runs':
+                        thresholds = calculate_thresholds(df, players_test)
+                        st.title("Number of predicted runs: " + str(avg_runs(thresholds)))
+                    else: # run_type == 'Lineup Optimization':
+                        # st.title('Fuck Alex')
+                        lineup, runs = do_flip_optimization(df, players_test)
+                        st.write(lineup)
+                        st.write(runs)
+                    
 
 if __name__ == "__main__":
     main()
-
-
 
