@@ -463,7 +463,7 @@ def main():
             if your_team_data is not None:
                 valid = check_file(your_team_data)
                 if not valid:
-                    st.error("try again fool")
+                    st.error("Something went wrong. Make sure you have all the right columns ('Player', 'AB', 'SO', 'HBP', 'BB', '2B', '3B', 'HR') and you have at least 9 players.")
         else:
             filename = 'rosters/' + your_team + '_roster.csv'
             your_team_data = pd.read_csv(filename)
