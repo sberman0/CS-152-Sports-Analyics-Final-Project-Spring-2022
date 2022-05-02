@@ -484,10 +484,10 @@ def main():
                 # st.write('compare')
             elif run_type == "Predicted # Of Runs":
                 run_predicted_runs(your_team_players, your_team_data, your_team)
-                st.write('predict')
+                # st.write('predict')
             else:
                 run_lineup_optimization(your_team_players, your_team_data, your_team)
-                st.write('optimize')
+                # st.write('optimize')
                            
                     
 
