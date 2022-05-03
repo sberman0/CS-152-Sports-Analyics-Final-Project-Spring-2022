@@ -1,0 +1,37 @@
+CS 152: Sports Analytics
+Spring 2022
+Final Project
+NESCAC Baseball Batting Order Optimization
+
+Authors: Samuel Berman       (sberma04)
+         Alex Maleno         (amalen01)
+         Thomas "Clay" Kynor (tkynor01)
+
+Purpose: A Streamlit web application for predicting number of
+         runs and optimizing batting order lineups for collegiate
+         baseball games. Users can first select a NESCAC team and
+         then a list of players from that team for the simulation.
+         Program then runs a Monte Carlo simulation of those
+         players to determine the average number of runs that
+         batting lineup would score.
+
+
+Code & How To Run:
+
+    - All of the Python code for the simulation and web application
+      is in roster-optimization.py
+
+    - 2021 season data and team logos are in the appropriate 
+      subdirectories
+
+    - To run:
+
+        Online: bit.ly/lineup-optimization
+
+        OR
+
+        Locally:
+            (1) pip install streamlit (if you haven't already)
+            (2) streamlit run roster-optimization.py
+                This will open up a local-host version of the web app
+
